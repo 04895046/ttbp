@@ -1,0 +1,170 @@
+@font-face {
+    font-family: "Helvetica";
+    src: url("./sus/HelveticaNeue-Regular.otf");
+}
+
+@font-face {
+   font-family: "ITC";
+   src: url("./sus/ITCAvantGardePro-Md.otf")
+}
+
+* {
+   font-family: Helvetica;
+   color: #131210;
+   background-color: #F3F1D8;
+}
+
+h1, h2 {
+   font-family: ITC;
+}
+
+hr {
+   background-color: #131210;
+   height: 3px;
+   border: 0;
+}
+
+#courses {
+   overflow-y: auto;
+}
+
+.suggestion-box {
+   border: 1px solid #D9D7C1;
+   max-height: 200px;
+   overflow-y: auto;
+   position: absolute;
+   z-index: 100;
+}
+
+.suggestion-item {
+   padding: 5px 10px;
+   cursor: pointer;
+}
+
+.suggestion-item:hover {
+   background-color: #D9D7C1;
+}
+
+.timetable-grid {
+   display: grid;
+   grid-template-columns: 50px repeat(5, 1fr);
+   grid-auto-rows: 25px;
+   gap: 0;
+   font-size: 0.85rem;
+   border: none;
+   position: relative;
+   overflow: hidden;
+   height: calc(25px * 28);
+}
+
+.timetable-grid > div {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   padding: 0;
+   box-sizing: border-box;
+   overflow: hidden;
+   border-right: none;
+   border-bottom: 1px solid #D9D7C1;
+}
+
+.timetable-grid .header {
+   font-weight: bold;
+   text-align: center;
+}
+
+.timetable-grid div.time-label {
+   border: none;
+   padding: 0;
+   display: flex;
+   align-items: flex-start; /* Align time label to the top of its row */
+   justify-content: flex-end; /* Align time label to the right */
+   position: relative;
+   overflow: visible;
+}
+
+.timetable-grid div.time-label span {
+   font-size: 0.8rem;
+   color: #24221E;
+   white-space: nowrap;
+   position: relative;
+   right: 6px;
+   transform: translateY(-50%); /* Center vertically on the grid line */
+   padding: 0 4px;
+   z-index: 3;
+   line-height: 1;
+}
+
+.timetable-grid .header:first-child {
+   border: none;
+}
+
+.section-line.selected,
+.meeting-line.selected {
+   font-weight: bold;
+}
+
+.instructor-line {
+   margin-top: 0;
+   margin-bottom: 0;
+   padding: 0;
+}
+
+.section-line {
+   margin-bottom: 0;
+}
+
+.meeting-block {
+   font-size: 12px;
+   position: absolute;
+   word-break: break-word;
+   overflow: hidden;
+   padding: 2px;
+   flex-grow: 1;
+   display: flex;
+   flex-direction: column;
+   border-bottom: none !important;
+}
+
+.remove-button {
+   position: absolute;
+   top: 2px;
+   right: 4px;
+   font-size: 14px;
+   font-weight: bold;
+   cursor: pointer;
+   opacity: 0;
+   transition: opacity 0.2s ease;
+   pointer-events: none;
+   padding: 0 4px;
+   border-radius: 2px;
+}
+
+.meeting-block:hover .remove-button {
+   opacity: 1;
+   pointer-events: auto;
+}
+
+#fall-timetable {
+   margin-bottom: 3rem;
+}
+
+.section-columns {
+   display: flex;
+   justify-content: space-between;
+   gap: 1.5rem;
+   margin-top: 1rem;
+}
+
+.section-column {
+   flex: 1;
+   min-width: 0;
+}
+
+.block-content {
+   justify-content: center;
+   align-items: center;
+   text-align: center;
+   color: inherit;
+   background-color: transparent;
+}
