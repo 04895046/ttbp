@@ -4,24 +4,40 @@ let selectedMeetings = {};
 // -- colors --
 const COURSE_COLORS = ['#992626', '#F28B30', '#F2B63D', '#C1D998', '#86B3B2', '#A574A4'];
 
-function getUsedColors() {
-  return new Set(Object.values(selectedMeetings).map(c => c._color));
+function getUsedColors(term) {
+  const used = new Set();
+  for (const courseCode in selectedMeetings) {
+    const colorObj = selectedMeetings[courseCode]._color;
+    if (!colorObj) continue;
+    if (term === 'Y') {
+      if (colorObj.fall) used.add(colorObj.fall);
+      if (colorObj.winter) used.add(colorObj.winter);
+    } else if (colorObj[term]) {
+      used.add(colorObj[term]);
+    }
+  }
+  return used;
 }
 
-function getAvailableColor() {
-  const used = getUsedColors();
+function getAvailableColor(term) {
+  const used = getUsedColors(term);
   const available = COURSE_COLORS.filter(c => !used.has(c));
   return available.length > 0
     ? available[Math.floor(Math.random() * available.length)] : null;
 }
 
-function ensureCourseColor(courseCode) {
-  if (!selectedMeetings[courseCode]._color) {
-    const color = getAvailableColor();
-    if (color) {
-      selectedMeetings[courseCode]._color = color;
-    } else {
-      selectedMeetings[courseCode]._color = '#999999';
+function ensureCourseColor(courseCode, term, sessionCode) {
+  selectedMeetings[courseCode]._color = selectedMeetings[courseCode]._color || {};
+  if (sessionCode === 'Y') {
+    if (!selectedMeetings[courseCode]._color.fall && !selectedMeetings[courseCode]._color.winter) {
+      const sharedColor = getAvailableColor('Y') || '#999999';
+      selectedMeetings[courseCode]._color.fall = sharedColor;
+      selectedMeetings[courseCode]._color.winter = sharedColor;
+    }
+  } else {
+    if (!selectedMeetings[courseCode]._color[term]) {
+      const color = getAvailableColor(term);
+      selectedMeetings[courseCode]._color[term] = color || '#999999';
     }
   }
 }
@@ -97,7 +113,10 @@ function updateSectionBolding(sectionDiv) {
   const courseCode = sectionDiv.closest('.course').dataset.courseCode;
   const sectionName = sectionLine.dataset.sectionName;
 
-  const allMeetingLinesForThisSection = Array.from(sectionDiv.querySelectorAll(`.meeting-line[data-section-name="${sectionName}"]`));
+  const allMeetingLinesForThisSection = Array.from(sectionDiv.querySelectorAll(`.meeting-line[data-section-name="${sectionName}"]`))
+  .filter(line => {
+    return line.closest('.course')?.dataset.courseCode === courseCode;
+  });
 
   if (allMeetingLinesForThisSection.length === 0) {
     sectionLine.classList.remove('selected');
@@ -252,7 +271,7 @@ function groupAndSortSections(sectionNodes) {
  * @param {string} session - Course session
  * @returns {string} - HTML string for the section
  */
-function renderSection(section, method, session) {
+function renderSection(section, method, session, courseCode) {
     const sectionName = section.querySelector('name')?.textContent || '';
     const currEnrol = section.querySelector('currentEnrolment')?.textContent || '';
     const wl = section.querySelector('currentWaitlist')?.textContent || '';
@@ -288,7 +307,7 @@ function renderSection(section, method, session) {
           const start = parseInt(m.querySelector('start > millisofday')?.textContent || '0');
           const end = parseInt(m.querySelector('end > millisofday')?.textContent || '0');
           const building = m.querySelector('building > buildingCode')?.textContent || '';
-          const id = `${sectionId}-${term}-${i}`;
+          const id = `${courseCode}-${sectionName}-${term}-${i}`;
           return `<div class="meeting-line" data-day="${day}" data-start="${start}" data-end="${end}" data-term="${term}" data-id="${id}" data-section-name="${sectionName}" data-building="${building}"><span>${numToDay(day)}, ${millisToTime(start)}–${millisToTime(end)} @ ${building}</span></div>`;
         }).join('');
     };
@@ -336,7 +355,7 @@ function renderCourse(courseData, groupedSections) {
 
     const blocks = sorted.map(method => {
       const inner = groupedSections[method]
-        .map(sec => renderSection(sec, method, courseData.session)).join('');
+        .map(sec => renderSection(sec, method, courseData.session, courseData.code)).join('');
       return `
         <div class="section-column">
           <h3>${method}</h3>
@@ -427,7 +446,7 @@ document.addEventListener('click', (e) => {
     const isCurrentlySelected = meetingLine.classList.contains('selected');
 
     selectedMeetings[courseCode] = selectedMeetings[courseCode] || {};
-    ensureCourseColor(courseCode);
+    ensureCourseColor(courseCode, term, courseSession);
 
     // toggle selection status
     if (!isCurrentlySelected) {
@@ -467,14 +486,14 @@ document.addEventListener('click', (e) => {
     const allMeetingLines = Array.from(sectionDiv.querySelectorAll(`.meeting-line[data-section-name="${sectionName}"]`));
 
     selectedMeetings[courseCode] = selectedMeetings[courseCode] || {};
-    ensureCourseColor(courseCode);
 
     // toggle selection status
     if (!isSelected) {
       sectionLine.classList.add('selected');
       allMeetingLines.forEach(line => {
+        const term = line.dataset.term;
+        ensureCourseColor(courseCode, term, courseSession);
         line.classList.add('selected');
-
         selectedMeetings[courseCode][line.dataset.id] = {
           sessionCode: courseSession,
           sectionCode: sectionName,
@@ -507,12 +526,11 @@ function renderSelectedMeetings() {
   const allBlocks = [];
 
   for (const courseCode in selectedMeetings) {
-    const color = selectedMeetings[courseCode]._color || '#999999';
-
     for (const meetingId in selectedMeetings[courseCode]) {
       if (meetingId === '_color') continue;
       const meeting = selectedMeetings[courseCode][meetingId];
       const { start, end, day, term } = meeting;
+      const color = selectedMeetings[courseCode]._color?.[term] || '#999999';
 
       allBlocks.push({
         ...meeting,
